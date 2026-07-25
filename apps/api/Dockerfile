@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # =============================================================================
-# apps/api — NestJS REST API (api-dms.sumedhsakya.com.np)
+# apps/api — NestJS REST API (api.deygalmemorialsociety.com)
 # Build context = repo root (needs the whole Nx workspace + lockfile).
 #   docker build -f apps/api/Dockerfile -t dms-api .
 # bcrypt is a native addon → glibc base (bookworm), not alpine/musl.

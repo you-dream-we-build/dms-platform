@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 # =============================================================================
-# apps/bo — Vite + React backoffice SPA (bo-dms.sumedhsakya.com.np)
+# apps/bo — Vite + React backoffice SPA (bo.deygalmemorialsociety.com)
 # Build context = repo root.
 #   docker build -f apps/bo/Dockerfile \
-#     --build-arg VITE_API_BASE_URL=https://api-dms.sumedhsakya.com.np/api \
+#     --build-arg VITE_API_BASE_URL=https://api.deygalmemorialsociety.com/api \
 #     -t dms-bo .
 #
 # VITE_API_BASE_URL is BAKED IN at build time (inlined into the static bundle)

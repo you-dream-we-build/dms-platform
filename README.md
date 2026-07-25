@@ -27,9 +27,9 @@ Three apps share one domain family. All traffic terminates at an nginx reverse p
 
 | App | Stack | Container port | Public domain | Role |
 |-----|-------|:---:|---------------|------|
-| `apps/web` | Next.js 16 (App Router, React 19), standalone server | 3000 | `dms.sumedhsakya.com.np` | Public site — read-only students/donors + public student registration |
-| `apps/bo` | Vite + React 19 SPA (static, served by nginx) | 80 | `bo-dms.sumedhsakya.com.np` | Authenticated admin backoffice (JWT) — CRUD over students/donors |
-| `apps/api` | NestJS 11 + Express, Mongoose | 3333 | `api-dms.sumedhsakya.com.np` | REST API (all routes under `/api`), Swagger at `/api/docs`, image uploads |
+| `apps/web` | Next.js 16 (App Router, React 19), standalone server | 3000 | `deygalmemorialsociety.com` | Public site — read-only students/donors + public student registration |
+| `apps/bo` | Vite + React 19 SPA (static, served by nginx) | 80 | `bo.deygalmemorialsociety.com` | Authenticated admin backoffice (JWT) — CRUD over students/donors |
+| `apps/api` | NestJS 11 + Express, Mongoose | 3333 | `api.deygalmemorialsociety.com` | REST API (all routes under `/api`), Swagger at `/api/docs`, image uploads |
 | `libs/shared` | TypeScript types (`@dms-platform/shared`) | — | — | Canonical `Student`/`Donor`/`Admin`/`ApiResponse` types |
 
 ```
@@ -122,7 +122,7 @@ See [`apps/api/.env.sample`](apps/api/.env.sample).
 | `JWT_SECRET` | JWT signing secret (long, random) | `openssl rand -base64 48` |
 | `JWT_EXPIRES_IN` | Token lifetime | `7d` |
 | `PORT` | Listen port | `3333` |
-| `CORS_ORIGINS` | Comma-separated allowed origins | `https://dms.sumedhsakya.com.np,https://bo-dms.sumedhsakya.com.np` |
+| `CORS_ORIGINS` | Comma-separated allowed origins | `https://deygalmemorialsociety.com,https://bo.deygalmemorialsociety.com` |
 
 These are **never baked into the image**. In production they come from OCI Vault (see [Secrets](#secrets-oci-vault--instance-principal)).
 
@@ -132,8 +132,8 @@ See [`apps/web/.env.sample`](apps/web/.env.sample) and [`apps/bo/.env.sample`](a
 
 | App | Variable | Notes |
 |-----|----------|-------|
-| web | `NEXT_PUBLIC_API_URL` | Inlined by `next build`; also drives `next.config.js` image `remotePatterns`. Prod: `https://api-dms.sumedhsakya.com.np/api` |
-| bo | `VITE_API_BASE_URL` | Inlined by Vite into the static bundle. Prod: `https://api-dms.sumedhsakya.com.np/api` |
+| web | `NEXT_PUBLIC_API_URL` | Inlined by `next build`; also drives `next.config.js` image `remotePatterns`. Prod: `https://api.deygalmemorialsociety.com/api` |
+| bo | `VITE_API_BASE_URL` | Inlined by Vite into the static bundle. Prod: `https://api.deygalmemorialsociety.com/api` |
 
 > ⚠️ Because these are compiled in, the **web and bo images are environment-specific** and must receive the value as a **Docker build arg** (the CI passes them from repo variables `WEB_API_URL` / `BO_API_URL`, defaulting to the production API URL). The **api image is environment-agnostic** — same image runs anywhere; only its runtime env changes.
 
@@ -157,11 +157,11 @@ Each app has a multi-stage Dockerfile built from the **repo root** context (the 
 docker build -f apps/api/Dockerfile -t dms-api:dev .
 
 docker build -f apps/web/Dockerfile \
-  --build-arg NEXT_PUBLIC_API_URL=https://api-dms.sumedhsakya.com.np/api \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.deygalmemorialsociety.com/api \
   -t dms-web:dev .
 
 docker build -f apps/bo/Dockerfile \
-  --build-arg VITE_API_BASE_URL=https://api-dms.sumedhsakya.com.np/api \
+  --build-arg VITE_API_BASE_URL=https://api.deygalmemorialsociety.com/api \
   -t dms-bo:dev .
 ```
 
@@ -200,7 +200,7 @@ push to main ──▶ build.yml ──▶ GHCR (arm64 image) ──▶ commit i
 |------|------|---------|
 | Secret | `GITOPS_PAT` | Fine-grained PAT, **Contents: read+write** on this repo → lets the bump push to `gitops` and trigger deploy |
 | Secret | `SSH_HOST`, `SSH_USER`, `SSH_KEY` (+ `SSH_PORT`?) | VM access for the deploy workflow |
-| Variable (optional) | `WEB_API_URL`, `BO_API_URL` | Override the baked API URL (default: `https://api-dms.sumedhsakya.com.np/api`) |
+| Variable (optional) | `WEB_API_URL`, `BO_API_URL` | Override the baked API URL (default: `https://api.deygalmemorialsociety.com/api`) |
 | Repo setting | Settings → Actions → Workflow permissions | Allow `GITHUB_TOKEN` package write (GHCR push) |
 
 > **Private-repo note:** GitHub-hosted **arm64** runners are free for *public* repos; for *private* repos they require a paid plan / billing enabled. If a run can't find the runner, either enable billing, make the repo public, or fall back to QEMU on `ubuntu-latest`.
@@ -252,9 +252,9 @@ Handled inside the compose stack by [`nginx-proxy`](https://github.com/nginx-pro
 
 | Domain | → service |
 |--------|-----------|
-| `dms.sumedhsakya.com.np` | web |
-| `api-dms.sumedhsakya.com.np` | api |
-| `bo-dms.sumedhsakya.com.np` | bo |
+| `deygalmemorialsociety.com` | web |
+| `api.deygalmemorialsociety.com` | api |
+| `bo.deygalmemorialsociety.com` | bo |
 
 **DNS:** point all three A records at the VM's public IP. **Firewall:** open 80 + 443 on the VM (and the OCI security list / NSG).
 

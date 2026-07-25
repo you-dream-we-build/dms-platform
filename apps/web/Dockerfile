@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 # =============================================================================
-# apps/web — Next.js 16 public site (dms.sumedhsakya.com.np)
+# apps/web — Next.js 16 public site (deygalmemorialsociety.com)
 # Build context = repo root.
 #   docker build -f apps/web/Dockerfile \
-#     --build-arg NEXT_PUBLIC_API_URL=https://api-dms.sumedhsakya.com.np/api \
+#     --build-arg NEXT_PUBLIC_API_URL=https://api.deygalmemorialsociety.com/api \
 #     -t dms-web .
 #
 # NEXT_PUBLIC_API_URL is BAKED IN at build time (inlined into the browser bundle

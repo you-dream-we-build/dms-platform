@@ -5,6 +5,7 @@ import { studentApi, Student } from '../../api/student.api';
 import { Table } from '../../components/Table';
 import { Pagination } from '../../components/Pagination';
 import { StatusBadge } from '../../components/StatusBadge';
+import { AvatarCell, AVATAR_COLUMN_CLASS } from '../../components/AvatarCell';
 
 export function StudentList() {
   const navigate = useNavigate();
@@ -53,15 +54,8 @@ export function StudentList() {
     {
       key: 'avatar',
       header: '',
-      className: 'w-10',
-      render: (s: Student) =>
-        s.avatar ? (
-          <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full object-cover" />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold">
-            {s.name[0]}
-          </div>
-        ),
+      className: AVATAR_COLUMN_CLASS,
+      render: (s: Student) => <AvatarCell name={s.name} src={s.avatar} />,
     },
     {
       key: 'name',

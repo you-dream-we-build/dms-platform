@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { studentApi, CreateStudentDto } from '../../api/student.api';
+import { studentApi, CreateStudentDto, toStudentPayload } from '../../api/student.api';
 import { useImageUpload } from '../../hooks/useImageUpload';
 
 type FormData = CreateStudentDto;
@@ -13,9 +13,10 @@ export function StudentForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const { upload, uploading, preview, selectFile, reset: resetPreview } = useImageUpload();
+  const avatarUpload = useImageUpload();
+  const certificateUpload = useImageUpload();
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [certificateImageUrl, setCertificateImageUrl] = useState('');
 
   const {
     register,
@@ -31,27 +32,32 @@ export function StudentForm() {
       const s = res.data.data;
       reset(s);
       if (s.avatar) setAvatarUrl(s.avatar);
+      if (s.certificateImage) setCertificateImageUrl(s.certificateImage);
     }).catch(() => toast.error('Failed to load student'));
   }, [id, reset]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    picker: typeof avatarUpload,
+    setUrl: (url: string) => void,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
+    // Reset the input so re-picking the same file still fires onChange
+    e.target.value = '';
     if (!file) return;
-    selectFile(file);
-  };
-
-  const handleUpload = async () => {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
-    const url = await upload(file);
+    const url = await picker.selectAndUpload(file);
     if (url) {
-      setAvatarUrl(url);
+      setUrl(url);
       toast.success('Image uploaded');
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    const payload = { ...data, avatar: avatarUrl || data.avatar };
+    const payload = toStudentPayload({
+      ...data,
+      avatar: avatarUrl,
+      certificateImage: certificateImageUrl,
+    });
     try {
       if (isEdit && id) {
         await studentApi.update(id, payload);
@@ -69,7 +75,8 @@ export function StudentForm() {
     }
   };
 
-  const currentPreview = preview || avatarUrl;
+  const avatarPreview = avatarUpload.preview || avatarUrl;
+  const certificatePreview = certificateUpload.preview || certificateImageUrl;
 
   return (
     <div className="max-w-2xl">
@@ -86,42 +93,69 @@ export function StudentForm() {
       <div className="card p-6">
         <form onSubmit={handleSubmit(onSubmit as Parameters<typeof handleSubmit>[0])} className="space-y-5">
 
-          {/* Image Upload */}
+          {/* Profile Image Upload */}
           <div>
             <label className="field-label">Profile Image</label>
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {currentPreview ? (
-                  <img src={currentPreview} alt="preview" className="w-full h-full object-cover" />
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-gray-400 text-xs text-center leading-tight px-1">No image</span>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <input
-                  ref={fileRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  id="avatar-upload"
-                  onChange={handleFileChange}
+                  id="student-avatar-upload"
+                  onChange={(e) => handleFileChange(avatarUpload, setAvatarUrl, e)}
+                  disabled={avatarUpload.uploading}
                 />
-                <label htmlFor="avatar-upload" className="btn-secondary btn btn-sm cursor-pointer">
-                  Choose File
+                <label htmlFor="student-avatar-upload" className="btn-secondary btn btn-sm cursor-pointer">
+                  {avatarUpload.uploading ? 'Uploading…' : avatarUrl ? 'Change File' : 'Choose File'}
                 </label>
-                {preview && (
-                  <button
-                    type="button"
-                    className="btn-primary btn btn-sm"
-                    onClick={handleUpload}
-                    disabled={uploading}
-                  >
-                    {uploading ? 'Uploading…' : 'Upload'}
+                {avatarUrl && !avatarUpload.uploading && (
+                  <button type="button" className="btn-ghost btn btn-sm text-red-500"
+                    onClick={() => { setAvatarUrl(''); avatarUpload.reset(); }}>
+                    Remove
                   </button>
                 )}
-                {currentPreview && (
+              </div>
+            </div>
+          </div>
+
+          {/* Certificate Image Upload */}
+          <div>
+            <label className="field-label">Certificate Image</label>
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-16 rounded bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {certificatePreview ? (
+                  <img src={certificatePreview} alt="Certificate preview" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-400 text-xs text-center leading-tight px-1">No image</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="certificate-image-upload"
+                  onChange={(e) => handleFileChange(certificateUpload, setCertificateImageUrl, e)}
+                  disabled={certificateUpload.uploading}
+                />
+                <label htmlFor="certificate-image-upload" className="btn-secondary btn btn-sm cursor-pointer">
+                  {certificateUpload.uploading
+                    ? 'Uploading…'
+                    : certificateImageUrl
+                      ? 'Change File'
+                      : 'Choose File'}
+                </label>
+                {certificateImageUrl && !certificateUpload.uploading && (
                   <button type="button" className="btn-ghost btn btn-sm text-red-500"
-                    onClick={() => { setAvatarUrl(''); resetPreview(); }}>
+                    onClick={() => { setCertificateImageUrl(''); certificateUpload.reset(); }}>
                     Remove
                   </button>
                 )}

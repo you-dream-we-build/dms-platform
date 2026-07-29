@@ -23,6 +23,7 @@ export interface Student {
   region: string;
   status: string;
   avatar?: string;
+  certificateImage?: string;
   email?: string;
   phone?: string;
   notes?: string;

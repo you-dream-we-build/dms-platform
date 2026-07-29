@@ -1,4 +1,5 @@
 import api from './axios';
+import { buildPayload } from './payload';
 
 export interface Student {
   _id: string;
@@ -8,6 +9,7 @@ export interface Student {
   region: string;
   status: string;
   avatar?: string;
+  certificateImage?: string;
   email?: string;
   phone?: string;
   notes?: string;
@@ -30,7 +32,32 @@ export interface CreateStudentDto {
   phone?: string;
   notes?: string;
   avatar?: string;
+  certificateImage?: string;
 }
+
+/** Every property the API's CreateStudentDto accepts. */
+const STUDENT_DTO_KEYS = [
+  'name',
+  'grade',
+  'school',
+  'region',
+  'status',
+  'email',
+  'phone',
+  'notes',
+  'avatar',
+  'certificateImage',
+] as const satisfies readonly (keyof CreateStudentDto)[];
+
+/** Image fields that must be sendable as '' so Remove actually clears them. */
+const STUDENT_CLEARABLE_KEYS = [
+  'avatar',
+  'certificateImage',
+] as const satisfies readonly (keyof CreateStudentDto)[];
+
+/** Narrow a form/document object down to a valid student request body. */
+export const toStudentPayload = (source: Record<string, unknown>) =>
+  buildPayload<CreateStudentDto>(source, STUDENT_DTO_KEYS, STUDENT_CLEARABLE_KEYS);
 
 export const studentApi = {
   list: (params: StudentListParams = {}) =>
@@ -47,12 +74,4 @@ export const studentApi = {
 
   delete: (id: string) =>
     api.delete(`/students/${id}`),
-
-  uploadImage: (file: File) => {
-    const form = new FormData();
-    form.append('file', file);
-    return api.post('/upload', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
 };

@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { donorApi, CreateDonorDto } from '../../api/donor.api';
+import { donorApi, CreateDonorDto, toDonorPayload } from '../../api/donor.api';
+import { useImageUpload } from '../../hooks/useImageUpload';
 
 type FormData = CreateDonorDto;
 
@@ -12,6 +13,8 @@ export function DonorForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const avatarUpload = useImageUpload();
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   const {
     register,
@@ -27,11 +30,28 @@ export function DonorForm() {
     donorApi.getOne(id).then((res) => {
       const d = res.data.data;
       reset({ ...d, date: d.date ? new Date(d.date).toISOString().split('T')[0] : '' });
+      if (d.avatar) setAvatarUrl(d.avatar);
     }).catch(() => toast.error('Failed to load donor'));
   }, [id, reset]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset the input so re-picking the same file still fires onChange
+    e.target.value = '';
+    if (!file) return;
+    const url = await avatarUpload.selectAndUpload(file);
+    if (url) {
+      setAvatarUrl(url);
+      toast.success('Image uploaded');
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
-    const payload = { ...data, amount: Number(data.amount) };
+    const payload = toDonorPayload({
+      ...data,
+      amount: Number(data.amount),
+      avatar: avatarUrl,
+    });
     try {
       if (isEdit && id) {
         await donorApi.update(id, payload);
@@ -49,6 +69,8 @@ export function DonorForm() {
     }
   };
 
+  const avatarPreview = avatarUpload.preview || avatarUrl;
+
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
@@ -62,6 +84,39 @@ export function DonorForm() {
 
       <div className="card p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+          {/* Profile Image Upload */}
+          <div>
+            <label className="field-label">Profile Image</label>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-400 text-xs text-center leading-tight px-1">No image</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="donor-avatar-upload"
+                  onChange={handleFileChange}
+                  disabled={avatarUpload.uploading}
+                />
+                <label htmlFor="donor-avatar-upload" className="btn-secondary btn btn-sm cursor-pointer">
+                  {avatarUpload.uploading ? 'Uploading…' : avatarUrl ? 'Change File' : 'Choose File'}
+                </label>
+                {avatarUrl && !avatarUpload.uploading && (
+                  <button type="button" className="btn-ghost btn btn-sm text-red-500"
+                    onClick={() => { setAvatarUrl(''); avatarUpload.reset(); }}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Name */}
           <div>

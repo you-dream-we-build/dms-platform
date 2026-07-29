@@ -6,6 +6,7 @@ export interface IStudent {
   region: string;
   status: 'Active' | 'Pending' | 'Graduated' | 'Inactive';
   avatar?: string;
+  certificateImage?: string;
   email?: string;
   phone?: string;
   notes?: string;

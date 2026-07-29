@@ -1,4 +1,5 @@
 import api from './axios';
+import { buildPayload } from './payload';
 
 export interface Donor {
   _id: string;
@@ -34,6 +35,27 @@ export interface CreateDonorDto {
   avatar?: string;
   message?: string;
 }
+
+/** Every property the API's CreateDonorDto accepts. */
+const DONOR_DTO_KEYS = [
+  'name',
+  'email',
+  'phone',
+  'amount',
+  'currency',
+  'location',
+  'type',
+  'date',
+  'avatar',
+  'message',
+] as const satisfies readonly (keyof CreateDonorDto)[];
+
+/** Image fields that must be sendable as '' so Remove actually clears them. */
+const DONOR_CLEARABLE_KEYS = ['avatar'] as const satisfies readonly (keyof CreateDonorDto)[];
+
+/** Narrow a form/document object down to a valid donor request body. */
+export const toDonorPayload = (source: Record<string, unknown>) =>
+  buildPayload<CreateDonorDto>(source, DONOR_DTO_KEYS, DONOR_CLEARABLE_KEYS);
 
 export const donorApi = {
   list: (params: DonorListParams = {}) =>

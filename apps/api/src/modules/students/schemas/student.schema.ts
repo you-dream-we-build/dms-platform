@@ -23,8 +23,13 @@ export class Student {
   })
   status: string;
 
+  /** Student's profile photo URL (returned by POST /api/upload). */
   @Prop({ default: '' })
   avatar: string;
+
+  /** Scanned academic certificate image URL (returned by POST /api/upload). */
+  @Prop({ default: '' })
+  certificateImage: string;
 
   @Prop({ trim: true, lowercase: true })
   email: string;

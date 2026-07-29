@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 
 const navItems = [
@@ -13,7 +14,8 @@ export function Layout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/login', { replace: true });
+    toast.success('Logged out successfully');
   };
 
   return (

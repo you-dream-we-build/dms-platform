@@ -1022,6 +1022,46 @@ a {
   font-size: 0.95rem;
 }
 
+/* Social Media Links */
+.social-links-wrapper {
+  margin-top: 3rem;
+}
+
+.social-links-title {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s, background 0.3s;
+}
+
+.social-link:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.social-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 /* Additional Utilities */
 .section-description {
   max-width: 600px;

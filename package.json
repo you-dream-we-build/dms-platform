@@ -15,7 +15,7 @@
     "start": "cd apps/web && npx next start",
     "start:web": "cd apps/web && npx next start",
     "start:api": "node dist/apps/api/main.js",
-    "seed": "ts-node -r tsconfig-paths/register apps/api/src/scripts/seed.ts",
+    "seed": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"CommonJS\"}' ts-node -r tsconfig-paths/register apps/api/src/scripts/seed.ts",
     "test:e2e": "nx e2e web-e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -32,7 +32,7 @@ export default async function StudentsPage() {
         <AvatarNameCell
           name={student.name}
           subtitle={student.grade}
-          avatarUrl={student.profileImage || student.avatar || ''}
+          avatarUrl={student.avatar ?? ''}
         />
       ),
       width: '25%',

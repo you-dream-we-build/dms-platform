@@ -32,12 +32,9 @@ export class Donor {
   @Prop({ type: Date, default: Date.now })
   date: Date;
 
-  @Prop({ default: '' })
-  avatar: string;
-
   /** Donor's profile photo URL (returned by POST /api/upload). */
   @Prop({ default: '' })
-  profileImage: string;
+  avatar: string;
 
   @Prop({ trim: true })
   message: string;

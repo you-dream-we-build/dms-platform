@@ -10,6 +10,18 @@ const { join } = require('path');
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 const { protocol, hostname, port } = new URL(apiUrl);
 
+// Next 16 refuses to optimize images whose host resolves to a private IP, even
+// when remotePatterns matches — it fails with '"url" parameter is not allowed'.
+// Local API hosts have to opt out explicitly or uploaded images 400 in dev.
+// Deliberately scoped to loopback/private hosts so production stays strict.
+const isLocalApiHost =
+  hostname === 'localhost' ||
+  hostname === '::1' ||
+  /^127\./.test(hostname) ||
+  /^10\./.test(hostname) ||
+  /^192\.168\./.test(hostname) ||
+  /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+
 /**
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
@@ -22,6 +34,7 @@ const nextConfig = {
   // Trace deps from the monorepo root so standalone bundles workspace node_modules.
   outputFileTracingRoot: join(__dirname, '../../'),
   images: {
+    dangerouslyAllowLocalIP: isLocalApiHost,
     remotePatterns: [
       {
         // Next's RemotePattern types protocol as the literal 'http' | 'https'.

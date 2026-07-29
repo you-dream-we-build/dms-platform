@@ -9,7 +9,6 @@ export interface Student {
   region: string;
   status: string;
   avatar?: string;
-  profileImage?: string;
   certificateImage?: string;
   email?: string;
   phone?: string;
@@ -33,7 +32,6 @@ export interface CreateStudentDto {
   phone?: string;
   notes?: string;
   avatar?: string;
-  profileImage?: string;
   certificateImage?: string;
 }
 
@@ -48,13 +46,18 @@ const STUDENT_DTO_KEYS = [
   'phone',
   'notes',
   'avatar',
-  'profileImage',
+  'certificateImage',
+] as const satisfies readonly (keyof CreateStudentDto)[];
+
+/** Image fields that must be sendable as '' so Remove actually clears them. */
+const STUDENT_CLEARABLE_KEYS = [
+  'avatar',
   'certificateImage',
 ] as const satisfies readonly (keyof CreateStudentDto)[];
 
 /** Narrow a form/document object down to a valid student request body. */
 export const toStudentPayload = (source: Record<string, unknown>) =>
-  buildPayload<CreateStudentDto>(source, STUDENT_DTO_KEYS);
+  buildPayload<CreateStudentDto>(source, STUDENT_DTO_KEYS, STUDENT_CLEARABLE_KEYS);
 
 export const studentApi = {
   list: (params: StudentListParams = {}) =>

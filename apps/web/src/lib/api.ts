@@ -23,7 +23,6 @@ export interface Student {
   region: string;
   status: string;
   avatar?: string;
-  profileImage?: string;
   certificateImage?: string;
   email?: string;
   phone?: string;
@@ -44,7 +43,6 @@ export interface Donor {
   type: string;
   date: string;
   avatar?: string;
-  profileImage?: string;
   message?: string;
   isDeleted: boolean;
   createdAt?: string;

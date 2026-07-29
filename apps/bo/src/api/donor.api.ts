@@ -12,7 +12,6 @@ export interface Donor {
   type: string;
   date: string;
   avatar?: string;
-  profileImage?: string;
   message?: string;
   createdAt: string;
 }
@@ -34,7 +33,6 @@ export interface CreateDonorDto {
   type?: string;
   date?: string;
   avatar?: string;
-  profileImage?: string;
   message?: string;
 }
 
@@ -49,13 +47,15 @@ const DONOR_DTO_KEYS = [
   'type',
   'date',
   'avatar',
-  'profileImage',
   'message',
 ] as const satisfies readonly (keyof CreateDonorDto)[];
 
+/** Image fields that must be sendable as '' so Remove actually clears them. */
+const DONOR_CLEARABLE_KEYS = ['avatar'] as const satisfies readonly (keyof CreateDonorDto)[];
+
 /** Narrow a form/document object down to a valid donor request body. */
 export const toDonorPayload = (source: Record<string, unknown>) =>
-  buildPayload<CreateDonorDto>(source, DONOR_DTO_KEYS);
+  buildPayload<CreateDonorDto>(source, DONOR_DTO_KEYS, DONOR_CLEARABLE_KEYS);
 
 export const donorApi = {
   list: (params: DonorListParams = {}) =>

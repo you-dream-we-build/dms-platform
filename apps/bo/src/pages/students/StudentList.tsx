@@ -55,9 +55,9 @@ export function StudentList() {
       header: '',
       className: 'w-10',
       render: (s: Student) =>
-        s.profileImage || s.avatar ? (
+        s.avatar ? (
           <img
-            src={s.profileImage || s.avatar}
+            src={s.avatar}
             alt={s.name}
             className="w-8 h-8 rounded-full object-cover"
           />

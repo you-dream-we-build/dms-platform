@@ -33,18 +33,13 @@ export class CreateStudentDto {
   @IsEnum(['Active', 'Pending', 'Graduated', 'Inactive'])
   status?: string;
 
-  @ApiPropertyOptional({ example: '' })
-  @IsOptional()
-  @IsString()
-  avatar?: string;
-
   @ApiPropertyOptional({
     example: 'http://localhost:3333/uploads/8f14e45f.jpg',
     description: 'Profile photo URL — upload the file via POST /api/upload first',
   })
   @IsOptional()
   @IsString()
-  profileImage?: string;
+  avatar?: string;
 
   @ApiPropertyOptional({
     example: 'http://localhost:3333/uploads/c9f0f895.png',

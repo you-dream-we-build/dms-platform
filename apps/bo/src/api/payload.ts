@@ -7,18 +7,28 @@
  *
  * Blank optionals are dropped too: an empty string fails validators like
  * `@IsEmail()`, which only run when the property is present.
+ *
+ * `clearableKeys` opt out of that last rule. Image URL fields must be able to
+ * send `''`, otherwise clicking Remove drops the key and the API keeps the old
+ * value — the image looks un-removable.
  */
 export function buildPayload<T extends object>(
   source: Record<string, unknown>,
   allowedKeys: readonly (keyof T)[],
+  clearableKeys: readonly (keyof T)[] = [],
 ): Partial<T> {
   const payload: Record<string, unknown> = {};
 
   for (const key of allowedKeys) {
     const value = source[key as string];
     if (value === undefined || value === null) continue;
-    if (typeof value === 'string' && value.trim() === '') continue;
-    payload[key as string] = typeof value === 'string' ? value.trim() : value;
+    if (typeof value !== 'string') {
+      payload[key as string] = value;
+      continue;
+    }
+    const trimmed = value.trim();
+    if (trimmed === '' && !clearableKeys.includes(key)) continue;
+    payload[key as string] = trimmed;
   }
 
   return payload as Partial<T>;

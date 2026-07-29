@@ -24,12 +24,12 @@ const INITIAL: FormFields = {
 };
 
 /** Image fields uploaded to POST /api/upload before the student is created. */
-type ImageField = 'profileImage' | 'certificateImage';
+type ImageField = 'avatar' | 'certificateImage';
 
-const IMAGE_FIELDS: ImageField[] = ['profileImage', 'certificateImage'];
+const IMAGE_FIELDS: ImageField[] = ['avatar', 'certificateImage'];
 
 const EMPTY_IMAGES: Record<ImageField, string> = {
-  profileImage: '',
+  avatar: '',
   certificateImage: '',
 };
 
@@ -264,7 +264,7 @@ export default function StudentRegisterForm() {
   const [images, setImages] = useState<Record<ImageField, string>>(EMPTY_IMAGES);
   const [previews, setPreviews] = useState<Record<ImageField, string>>(EMPTY_IMAGES);
   const [uploading, setUploading] = useState<Record<ImageField, boolean>>({
-    profileImage: false,
+    avatar: false,
     certificateImage: false,
   });
   const [imageErrors, setImageErrors] = useState<Record<ImageField, string>>(EMPTY_IMAGES);
@@ -407,7 +407,7 @@ export default function StudentRegisterForm() {
           email: form.email.trim() || undefined,
           phone: form.phone.trim() || undefined,
           notes: form.notes.trim() || undefined,
-          profileImage: images.profileImage || undefined,
+          avatar: images.avatar || undefined,
           certificateImage: images.certificateImage || undefined,
           status: 'Pending',
         }),
@@ -587,8 +587,8 @@ export default function StudentRegisterForm() {
           </label>
           <div style={s.uploadRow}>
             <div style={mergeStyle(s.previewBox, s.previewCircle)}>
-              {previews.profileImage ? (
-                <img src={previews.profileImage} alt="Profile preview" style={s.previewImg} />
+              {previews.avatar ? (
+                <img src={previews.avatar} alt="Profile preview" style={s.previewImg} />
               ) : (
                 <span>No image</span>
               )}
@@ -599,27 +599,27 @@ export default function StudentRegisterForm() {
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 style={s.hiddenFileInput}
-                onChange={(e) => handleImageSelect('profileImage', e)}
-                disabled={uploading.profileImage || submitting}
+                onChange={(e) => handleImageSelect('avatar', e)}
+                disabled={uploading.avatar || submitting}
               />
               <label
                 htmlFor="reg-profile-image"
                 style={mergeStyle(
                   s.fileButton,
-                  uploading.profileImage || submitting ? s.fileButtonDisabled : {},
+                  uploading.avatar || submitting ? s.fileButtonDisabled : {},
                 )}
               >
-                {uploading.profileImage
+                {uploading.avatar
                   ? 'Uploading…'
-                  : images.profileImage
+                  : images.avatar
                     ? 'Change Photo'
                     : 'Choose Photo'}
               </label>
-              {images.profileImage && !uploading.profileImage && (
+              {images.avatar && !uploading.avatar && (
                 <button
                   type="button"
                   style={s.removeButton}
-                  onClick={() => handleImageRemove('profileImage')}
+                  onClick={() => handleImageRemove('avatar')}
                 >
                   Remove
                 </button>
@@ -627,8 +627,8 @@ export default function StudentRegisterForm() {
               <span style={s.hint}>JPG, PNG, GIF or WEBP · max 5 MB</span>
             </div>
           </div>
-          {imageErrors.profileImage && (
-            <span style={s.errorMsg}>{imageErrors.profileImage}</span>
+          {imageErrors.avatar && (
+            <span style={s.errorMsg}>{imageErrors.avatar}</span>
           )}
         </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -13,9 +13,8 @@ export function DonorForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const profileFileRef = useRef<HTMLInputElement>(null);
-  const profileUpload = useImageUpload();
-  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const avatarUpload = useImageUpload();
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   const {
     register,
@@ -31,24 +30,18 @@ export function DonorForm() {
     donorApi.getOne(id).then((res) => {
       const d = res.data.data;
       reset({ ...d, date: d.date ? new Date(d.date).toISOString().split('T')[0] : '' });
-      // Fall back to the legacy `avatar` field for records created before
-      // `profileImage` existed.
-      if (d.profileImage || d.avatar) setProfileImageUrl(d.profileImage || d.avatar);
+      if (d.avatar) setAvatarUrl(d.avatar);
     }).catch(() => toast.error('Failed to load donor'));
   }, [id, reset]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset the input so re-picking the same file still fires onChange
+    e.target.value = '';
     if (!file) return;
-    profileUpload.selectFile(file);
-  };
-
-  const handleUpload = async () => {
-    const file = profileFileRef.current?.files?.[0];
-    if (!file) return;
-    const url = await profileUpload.upload(file);
+    const url = await avatarUpload.selectAndUpload(file);
     if (url) {
-      setProfileImageUrl(url);
+      setAvatarUrl(url);
       toast.success('Image uploaded');
     }
   };
@@ -57,7 +50,7 @@ export function DonorForm() {
     const payload = toDonorPayload({
       ...data,
       amount: Number(data.amount),
-      profileImage: profileImageUrl,
+      avatar: avatarUrl,
     });
     try {
       if (isEdit && id) {
@@ -76,7 +69,7 @@ export function DonorForm() {
     }
   };
 
-  const profilePreview = profileUpload.preview || profileImageUrl;
+  const avatarPreview = avatarUpload.preview || avatarUrl;
 
   return (
     <div className="max-w-2xl">
@@ -97,37 +90,27 @@ export function DonorForm() {
             <label className="field-label">Profile Image</label>
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {profilePreview ? (
-                  <img src={profilePreview} alt="Profile preview" className="w-full h-full object-cover" />
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-gray-400 text-xs text-center leading-tight px-1">No image</span>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <input
-                  ref={profileFileRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  id="donor-profile-image-upload"
+                  id="donor-avatar-upload"
                   onChange={handleFileChange}
+                  disabled={avatarUpload.uploading}
                 />
-                <label htmlFor="donor-profile-image-upload" className="btn-secondary btn btn-sm cursor-pointer">
-                  Choose File
+                <label htmlFor="donor-avatar-upload" className="btn-secondary btn btn-sm cursor-pointer">
+                  {avatarUpload.uploading ? 'Uploading…' : avatarUrl ? 'Change File' : 'Choose File'}
                 </label>
-                {profileUpload.preview && (
-                  <button
-                    type="button"
-                    className="btn-primary btn btn-sm"
-                    onClick={handleUpload}
-                    disabled={profileUpload.uploading}
-                  >
-                    {profileUpload.uploading ? 'Uploading…' : 'Upload'}
-                  </button>
-                )}
-                {profilePreview && (
+                {avatarUrl && !avatarUpload.uploading && (
                   <button type="button" className="btn-ghost btn btn-sm text-red-500"
-                    onClick={() => { setProfileImageUrl(''); profileUpload.reset(); }}>
+                    onClick={() => { setAvatarUrl(''); avatarUpload.reset(); }}>
                     Remove
                   </button>
                 )}

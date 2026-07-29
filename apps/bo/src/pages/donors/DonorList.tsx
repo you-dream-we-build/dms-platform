@@ -5,6 +5,7 @@ import { donorApi, Donor } from '../../api/donor.api';
 import { Table } from '../../components/Table';
 import { Pagination } from '../../components/Pagination';
 import { StatusBadge } from '../../components/StatusBadge';
+import { AvatarCell, AVATAR_COLUMN_CLASS } from '../../components/AvatarCell';
 
 export function DonorList() {
   const navigate = useNavigate();
@@ -50,6 +51,12 @@ export function DonorList() {
   };
 
   const columns = [
+    {
+      key: 'avatar',
+      header: '',
+      className: AVATAR_COLUMN_CLASS,
+      render: (d: Donor) => <AvatarCell name={d.name} src={d.avatar} />,
+    },
     {
       key: 'name',
       header: 'Donor',

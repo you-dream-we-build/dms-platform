@@ -12,6 +12,7 @@ export interface Donor {
   type: string;
   date: string;
   avatar?: string;
+  profileImage?: string;
   message?: string;
   createdAt: string;
 }
@@ -33,6 +34,7 @@ export interface CreateDonorDto {
   type?: string;
   date?: string;
   avatar?: string;
+  profileImage?: string;
   message?: string;
 }
 
@@ -47,6 +49,7 @@ const DONOR_DTO_KEYS = [
   'type',
   'date',
   'avatar',
+  'profileImage',
   'message',
 ] as const satisfies readonly (keyof CreateDonorDto)[];
 

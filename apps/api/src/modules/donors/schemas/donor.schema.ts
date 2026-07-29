@@ -35,6 +35,10 @@ export class Donor {
   @Prop({ default: '' })
   avatar: string;
 
+  /** Donor's profile photo URL (returned by POST /api/upload). */
+  @Prop({ default: '' })
+  profileImage: string;
+
   @Prop({ trim: true })
   message: string;
 

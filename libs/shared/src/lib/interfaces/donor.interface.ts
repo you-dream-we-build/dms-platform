@@ -9,6 +9,7 @@ export interface IDonor {
   type: 'One-time' | 'Monthly' | 'Annual';
   date: Date;
   avatar?: string;
+  profileImage?: string;
   message?: string;
   isDeleted: boolean;
   createdAt?: Date;

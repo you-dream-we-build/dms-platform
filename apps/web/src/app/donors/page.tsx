@@ -29,7 +29,7 @@ export default async function DonorsPage() {
         <AvatarNameCell
           name={donor.name}
           subtitle={donor.location}
-          avatarUrl={donor.avatar ?? ''}
+          avatarUrl={donor.profileImage || donor.avatar || ''}
         />
       ),
       width: '30%',

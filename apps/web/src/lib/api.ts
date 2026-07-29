@@ -44,6 +44,7 @@ export interface Donor {
   type: string;
   date: string;
   avatar?: string;
+  profileImage?: string;
   message?: string;
   isDeleted: boolean;
   createdAt?: string;

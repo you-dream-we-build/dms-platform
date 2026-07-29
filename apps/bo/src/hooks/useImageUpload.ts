@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { studentApi } from '../api/student.api';
+import { uploadApi } from '../api/upload.api';
 
 export function useImageUpload() {
   const [uploading, setUploading] = useState(false);
@@ -15,7 +15,7 @@ export function useImageUpload() {
   const upload = async (file: File): Promise<string | null> => {
     setUploading(true);
     try {
-      const res = await studentApi.uploadImage(file);
+      const res = await uploadApi.uploadImage(file);
       const url: string = res.data?.data?.url ?? res.data?.url ?? '';
       return url;
     } catch {

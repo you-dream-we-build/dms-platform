@@ -55,8 +55,12 @@ export function StudentList() {
       header: '',
       className: 'w-10',
       render: (s: Student) =>
-        s.avatar ? (
-          <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full object-cover" />
+        s.profileImage || s.avatar ? (
+          <img
+            src={s.profileImage || s.avatar}
+            alt={s.name}
+            className="w-8 h-8 rounded-full object-cover"
+          />
         ) : (
           <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold">
             {s.name[0]}

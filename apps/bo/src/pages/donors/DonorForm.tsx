@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { donorApi, CreateDonorDto } from '../../api/donor.api';
+import { donorApi, CreateDonorDto, toDonorPayload } from '../../api/donor.api';
 
 type FormData = CreateDonorDto;
 
@@ -31,7 +31,7 @@ export function DonorForm() {
   }, [id, reset]);
 
   const onSubmit = async (data: FormData) => {
-    const payload = { ...data, amount: Number(data.amount) };
+    const payload = toDonorPayload({ ...data, amount: Number(data.amount) });
     try {
       if (isEdit && id) {
         await donorApi.update(id, payload);

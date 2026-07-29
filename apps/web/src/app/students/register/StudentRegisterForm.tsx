@@ -23,6 +23,20 @@ const INITIAL: FormFields = {
   notes: '',
 };
 
+/** Image fields uploaded to POST /api/upload before the student is created. */
+type ImageField = 'profileImage' | 'certificateImage';
+
+const IMAGE_FIELDS: ImageField[] = ['profileImage', 'certificateImage'];
+
+const EMPTY_IMAGES: Record<ImageField, string> = {
+  profileImage: '',
+  certificateImage: '',
+};
+
+// Keep these in sync with apps/api/src/modules/upload/upload.constants.ts
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_MIME = /^image\/(jpe?g|png|gif|webp)$/;
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333/api';
 
 /* ── Inline styles — scoped to this component ─────────────────── */
@@ -78,6 +92,76 @@ const s: Record<string, React.CSSProperties> = {
   textarea: {
     resize: 'vertical' as const,
     minHeight: '100px',
+  },
+  // Image upload
+  uploadRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  previewBox: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    overflow: 'hidden',
+    background: '#f1f5f9',
+    border: '1.5px dashed #cbd5e1',
+    color: '#94a3b8',
+    fontSize: '0.7rem',
+    textAlign: 'center' as const,
+  },
+  previewCircle: {
+    width: '72px',
+    height: '72px',
+    borderRadius: '50%',
+  },
+  previewRect: {
+    width: '110px',
+    height: '72px',
+    borderRadius: '8px',
+  },
+  previewImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+  },
+  uploadControls: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '0.4rem',
+  },
+  fileButton: {
+    display: 'inline-block',
+    padding: '0.45rem 0.9rem',
+    border: '1.5px solid #0f3d68',
+    borderRadius: '8px',
+    color: '#0f3d68',
+    background: '#fff',
+    fontSize: '0.82rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  fileButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+  },
+  hiddenFileInput: {
+    display: 'none',
+  },
+  removeButton: {
+    padding: 0,
+    border: 'none',
+    background: 'none',
+    color: '#dc2626',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  hint: {
+    fontSize: '0.75rem',
+    color: '#888',
   },
   errorMsg: {
     fontSize: '0.78rem',
@@ -176,6 +260,96 @@ export default function StudentRegisterForm() {
   const [serverError, setServerError] = useState('');
   const [submittedName, setSubmittedName] = useState('');
 
+  // Uploaded image URLs, local object-URL previews, and per-field upload state
+  const [images, setImages] = useState<Record<ImageField, string>>(EMPTY_IMAGES);
+  const [previews, setPreviews] = useState<Record<ImageField, string>>(EMPTY_IMAGES);
+  const [uploading, setUploading] = useState<Record<ImageField, boolean>>({
+    profileImage: false,
+    certificateImage: false,
+  });
+  const [imageErrors, setImageErrors] = useState<Record<ImageField, string>>(EMPTY_IMAGES);
+
+  const isUploading = IMAGE_FIELDS.some((f) => uploading[f]);
+
+  /** Swap in a new preview for `field`, releasing the object URL it replaces. */
+  const setPreview = (field: ImageField, url: string) => {
+    setPreviews((prev) => {
+      if (prev[field]) URL.revokeObjectURL(prev[field]);
+      return { ...prev, [field]: url };
+    });
+  };
+
+  const clearImages = () => {
+    IMAGE_FIELDS.forEach((f) => setPreview(f, ''));
+    setImages(EMPTY_IMAGES);
+    setImageErrors(EMPTY_IMAGES);
+  };
+
+  const handleImageSelect = async (
+    field: ImageField,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    // Reset the input so re-picking the same file still fires onChange
+    e.target.value = '';
+    if (!file) return;
+
+    setServerError('');
+    setImageErrors((prev) => ({ ...prev, [field]: '' }));
+
+    if (!ALLOWED_IMAGE_MIME.test(file.type)) {
+      setImageErrors((prev) => ({
+        ...prev,
+        [field]: 'Choose a JPG, PNG, GIF or WEBP image',
+      }));
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageErrors((prev) => ({
+        ...prev,
+        [field]: 'Image must be 5 MB or smaller',
+      }));
+      return;
+    }
+
+    setPreview(field, URL.createObjectURL(file));
+    setImages((prev) => ({ ...prev, [field]: '' }));
+    setUploading((prev) => ({ ...prev, [field]: true }));
+
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body });
+      const data = await res.json();
+
+      if (!res.ok || !data?.data?.url) {
+        const msg = Array.isArray(data?.message)
+          ? data.message.join(', ')
+          : data?.message;
+        throw new Error(msg ?? 'Upload failed');
+      }
+
+      setImages((prev) => ({ ...prev, [field]: data.data.url }));
+    } catch (err) {
+      setPreview(field, '');
+      setImageErrors((prev) => ({
+        ...prev,
+        [field]:
+          err instanceof Error && err.message
+            ? err.message
+            : 'Upload failed. Please try again.',
+      }));
+    } finally {
+      setUploading((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleImageRemove = (field: ImageField) => {
+    setPreview(field, '');
+    setImages((prev) => ({ ...prev, [field]: '' }));
+    setImageErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
   const validate = (): boolean => {
     const errs: Partial<FormFields> = {};
     if (!form.name.trim()) errs.name = 'Full name is required';
@@ -213,6 +387,10 @@ export default function StudentRegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (isUploading) {
+      setServerError('Please wait for the image upload to finish.');
+      return;
+    }
 
     setSubmitting(true);
     setServerError('');
@@ -229,6 +407,8 @@ export default function StudentRegisterForm() {
           email: form.email.trim() || undefined,
           phone: form.phone.trim() || undefined,
           notes: form.notes.trim() || undefined,
+          profileImage: images.profileImage || undefined,
+          certificateImage: images.certificateImage || undefined,
           status: 'Pending',
         }),
       });
@@ -246,6 +426,7 @@ export default function StudentRegisterForm() {
       setSubmittedName(form.name.trim());
       setSuccess(true);
       setForm(INITIAL);
+      clearImages();
     } catch {
       setServerError('Unable to connect to the server. Please try again later.');
     } finally {
@@ -398,6 +579,115 @@ export default function StudentRegisterForm() {
         />
       </div>
 
+      {/* Profile + Certificate images */}
+      <div style={s.row2}>
+        <div style={s.group}>
+          <label style={s.label} htmlFor="reg-profile-image">
+            Profile Image <span style={s.optional}>(optional)</span>
+          </label>
+          <div style={s.uploadRow}>
+            <div style={mergeStyle(s.previewBox, s.previewCircle)}>
+              {previews.profileImage ? (
+                <img src={previews.profileImage} alt="Profile preview" style={s.previewImg} />
+              ) : (
+                <span>No image</span>
+              )}
+            </div>
+            <div style={s.uploadControls}>
+              <input
+                id="reg-profile-image"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                style={s.hiddenFileInput}
+                onChange={(e) => handleImageSelect('profileImage', e)}
+                disabled={uploading.profileImage || submitting}
+              />
+              <label
+                htmlFor="reg-profile-image"
+                style={mergeStyle(
+                  s.fileButton,
+                  uploading.profileImage || submitting ? s.fileButtonDisabled : {},
+                )}
+              >
+                {uploading.profileImage
+                  ? 'Uploading…'
+                  : images.profileImage
+                    ? 'Change Photo'
+                    : 'Choose Photo'}
+              </label>
+              {images.profileImage && !uploading.profileImage && (
+                <button
+                  type="button"
+                  style={s.removeButton}
+                  onClick={() => handleImageRemove('profileImage')}
+                >
+                  Remove
+                </button>
+              )}
+              <span style={s.hint}>JPG, PNG, GIF or WEBP · max 5 MB</span>
+            </div>
+          </div>
+          {imageErrors.profileImage && (
+            <span style={s.errorMsg}>{imageErrors.profileImage}</span>
+          )}
+        </div>
+
+        <div style={s.group}>
+          <label style={s.label} htmlFor="reg-certificate-image">
+            Certificate Image <span style={s.optional}>(optional)</span>
+          </label>
+          <div style={s.uploadRow}>
+            <div style={mergeStyle(s.previewBox, s.previewRect)}>
+              {previews.certificateImage ? (
+                <img
+                  src={previews.certificateImage}
+                  alt="Certificate preview"
+                  style={s.previewImg}
+                />
+              ) : (
+                <span>No image</span>
+              )}
+            </div>
+            <div style={s.uploadControls}>
+              <input
+                id="reg-certificate-image"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                style={s.hiddenFileInput}
+                onChange={(e) => handleImageSelect('certificateImage', e)}
+                disabled={uploading.certificateImage || submitting}
+              />
+              <label
+                htmlFor="reg-certificate-image"
+                style={mergeStyle(
+                  s.fileButton,
+                  uploading.certificateImage || submitting ? s.fileButtonDisabled : {},
+                )}
+              >
+                {uploading.certificateImage
+                  ? 'Uploading…'
+                  : images.certificateImage
+                    ? 'Change Certificate'
+                    : 'Choose Certificate'}
+              </label>
+              {images.certificateImage && !uploading.certificateImage && (
+                <button
+                  type="button"
+                  style={s.removeButton}
+                  onClick={() => handleImageRemove('certificateImage')}
+                >
+                  Remove
+                </button>
+              )}
+              <span style={s.hint}>Latest marksheet or certificate · max 5 MB</span>
+            </div>
+          </div>
+          {imageErrors.certificateImage && (
+            <span style={s.errorMsg}>{imageErrors.certificateImage}</span>
+          )}
+        </div>
+      </div>
+
       {/* Info note */}
       <div style={s.infoNote}>
         <span style={s.infoIcon}>ℹ</span>
@@ -417,8 +707,16 @@ export default function StudentRegisterForm() {
         >
           ← Back to Students
         </button>
-        <button type="submit" className="btn btn-sm" disabled={submitting}>
-          {submitting ? 'Submitting…' : 'Submit Registration'}
+        <button
+          type="submit"
+          className="btn btn-sm"
+          disabled={submitting || isUploading}
+        >
+          {submitting
+            ? 'Submitting…'
+            : isUploading
+              ? 'Uploading image…'
+              : 'Submit Registration'}
         </button>
       </div>
     </form>
